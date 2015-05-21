@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.method.KeyListener;
@@ -20,13 +21,22 @@ import android.widget.Toast;
 public class MainActivity extends ActionBarActivity {
     private PendingIntent alarmIntent = null;
     private AlarmManager am = null;
-    private String alarmText = "";
+    private String formattedNumber = "";
+    private String desiredMessage = "";
     private BroadcastReceiver alarmReceiver = new AlarmReciever();
 
     public class AlarmReciever extends BroadcastReceiver {
 
         public void onReceive(Context c, Intent i) {
-            Toast.makeText(MainActivity.this, alarmText, Toast.LENGTH_SHORT).show();
+            //String alarmText = formattedNumber + ": Are we there yet?";
+
+            Uri uri = Uri.parse("sms://" + formattedNumber);
+            //Uri uri = Uri.parse("sms://5554");
+            Intent it = new Intent(Intent.ACTION_VIEW, uri);
+            it.putExtra("sms_body", desiredMessage);
+
+            startActivity(it);
+            //Toast.makeText(MainActivity.this, alarmText, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -59,6 +69,7 @@ public class MainActivity extends ActionBarActivity {
                 if (btnSubmit.getText().toString().equals("Start")) {
 
                     String message = editMessage.getText().toString();
+                    desiredMessage = message;
                     String phone = editPhone.getText().toString();
                     double minutesDouble = 0;
                     if (isNumeric(editMinutes.getText().toString())) {
@@ -74,7 +85,7 @@ public class MainActivity extends ActionBarActivity {
                     registerReceiver(alarmReceiver, new IntentFilter("edu.washington.cpolyukh.awty"));
                     int timeInMillis = minutes * 60 * 1000;
                     am.setInexactRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), timeInMillis, alarmIntent);
-                    alarmText = formatPhoneNumber(phone) + ": Are we there yet?";
+                    formattedNumber = formatPhoneNumber(phone);
 
                 } else {
                     btnSubmit.setText("Start");
@@ -87,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
 
 
     private String formatPhoneNumber(String phone) {
-        String formatted = "(" + phone.substring(0, 3) + ") " + phone.substring(3, 6) +
+        String formatted = phone.substring(0, 3) + "-" + phone.substring(3, 6) +
                 "-" + phone.substring(6);
         return formatted;
     }
